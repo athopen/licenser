@@ -1,8 +1,12 @@
 package licenser
 
 import (
-	"github.com/athopen/licenser/internal"
 	"github.com/symfony-cli/console"
+)
+
+var (
+	// version is overridden at linking time
+	version = "dev"
 )
 
 var (
@@ -13,9 +17,9 @@ var (
 
 func Application() *console.Application {
 	return &console.Application{
-		Name:      "license-checker",
+		Name:      "licenser",
 		Copyright: "(c) 2024 Andreas Penz",
-		Usage:     "N/A",
+		Usage:     "Licenser is a tool designed to check and report on the licenses used by a package and its dependencies.",
 		Flags: []console.Flag{
 			fileFlag,
 			dirFlag,
@@ -24,8 +28,6 @@ func Application() *console.Application {
 			infoCommand(),
 			checkCommand(),
 		},
-		Version:   internal.Version,
-		Channel:   internal.Channel,
-		BuildDate: internal.BuildDate,
+		Version: version,
 	}
 }

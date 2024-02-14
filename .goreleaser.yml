@@ -1,0 +1,70 @@
+before:
+  hooks:
+    - go mod download
+
+changelog:
+  sort: desc
+  use: github
+  filters:
+    exclude:
+      - Merge branch
+      - Merge pull request
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - 386
+      - amd64
+      - arm
+      - arm64
+    goarm:
+      - 6
+    ignore:
+      - goos: darwin
+        goarch: 386
+      - goos: darwin
+        goarch: arm
+    main: ./cmd/
+    binary: licenser
+    flags:
+      - -trimpath
+
+archives:
+  -   name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+      files:
+        - README.md
+
+checksum:
+  name_template: checksums.txt
+
+source:
+  enabled: true
+
+snapshot:
+  name_template: next
+
+universal_binaries:
+  -   replace: true
+      name_template: licenser
+
+release:
+  footer: |
+    **Full Changelog**: https://github.com/athopen/licenser/compare/{{ .PreviousTag }}...{{ .Tag }}
+
+nfpms:
+  -   file_name_template: '{{ .ConventionalFileName }}'
+      id: packages
+      homepage: https://github.com/athopen/licenser/
+      description: Licenser is a tool designed to check and report on the licenses used by a package and its dependencies.
+      maintainer: Andreas Penz <andreas.penz.1989@gmail.com>
+      vendor: andreaspenz
+      formats:
+        - apk
+        - deb
+        - rpm
+      recommends:
+        - git
