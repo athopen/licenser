@@ -46,12 +46,12 @@ func NewRepo(path string) (*Repo, error) {
 		return nil, fmt.Errorf("unable to read installed.json")
 	}
 
-	var repo *Repo
+	var repo Repo
 	if err = json.Unmarshal(content, &repo); err != nil {
 		return nil, fmt.Errorf("installed.json does not contain valid JSON")
 	}
 
-	return repo, nil
+	return &repo, nil
 }
 
 func (r *Repo) GetPackages(noDev bool) []Package {
