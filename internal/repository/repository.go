@@ -1,14 +1,12 @@
-package internal
+package repository
 
 import (
 	"encoding/json"
 	"fmt"
-	"io"
-	"os"
+	"github.com/athopen/licenser/internal/filesystem"
+	"github.com/spf13/afero"
 	"path/filepath"
 	"slices"
-
-	"github.com/mitchellh/go-homedir"
 )
 
 type Repo struct {
@@ -23,31 +21,18 @@ type Package struct {
 	Licenses []string `json:"license"`
 }
 
-func NewRepo(path string) (*Repo, error) {
-	path, err := homedir.Expand(path)
+var (
+	installedJsonPath = filepath.Join("vendor", "composer", "installed.json")
+)
+
+func LoadRepository(fs afero.Fs, wd string) (*Repo, error) {
+	contents, err := filesystem.ReadFile(fs, filepath.Join(wd, installedJsonPath))
 	if err != nil {
 		return nil, err
-	}
-
-	if path == "" {
-		var err error
-		if path, err = os.Getwd(); err != nil {
-			return nil, err
-		}
-	}
-
-	reader, err := os.Open(filepath.Join(path, "vendor", "composer", "installed.json"))
-	if err != nil {
-		return nil, err
-	}
-
-	content, err := io.ReadAll(reader)
-	if err != nil {
-		return nil, fmt.Errorf("unable to read installed.json")
 	}
 
 	var repo Repo
-	if err = json.Unmarshal(content, &repo); err != nil {
+	if err = json.Unmarshal(contents, &repo); err != nil {
 		return nil, fmt.Errorf("installed.json does not contain valid JSON")
 	}
 
@@ -55,14 +40,14 @@ func NewRepo(path string) (*Repo, error) {
 }
 
 func (r *Repo) GetPackages(noDev bool) []Package {
-	pkgs := make([]Package, 0)
+	packages := make([]Package, 0)
 	for _, pkg := range r.Packages {
 		if noDev == true && slices.Contains(r.DevPackageNames, pkg.Name) {
 			continue
 		}
 
-		pkgs = append(pkgs, pkg)
+		packages = append(packages, pkg)
 	}
 
-	return pkgs
+	return packages
 }
