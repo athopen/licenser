@@ -14,19 +14,34 @@ import (
 
 func checkCommand() *console.Command {
 	return &console.Command{
-		Name:   "check",
-		Usage:  "N/A",
-		Action: withProjectOptions(checkAction),
+		Name:  "check",
+		Usage: "N/A",
+		Flags: []console.Flag{
+			dirFlag,
+			fileFlag,
+			noDevFlag,
+		},
+		Action: checkAction,
 	}
 }
 
-func checkAction(_ *console.Context, opts *cli.ProjectOptions) error {
-	repo, err := repository.LoadRepository(opts.Fs, opts.WorkingDir)
+func checkAction(ctx *console.Context) error {
+	opts, err := cli.NewProjectOptions(
+		cli.WithWorkingDir(fs, ctx.String(dirFlag.Name)),
+		cli.WithConfigFile(fs, ctx.String(fileFlag.Name)),
+		cli.WithNoDev(ctx.Bool(noDevFlag.Name)),
+	)
+
 	if err != nil {
 		return err
 	}
 
-	project, err := config.LoadProject(opts.Fs, opts.ConfigFile)
+	repo, err := repository.LoadRepository(fs, opts.WorkingDir)
+	if err != nil {
+		return err
+	}
+
+	project, err := config.LoadProject(fs, opts.ConfigFile)
 	if err != nil {
 		return err
 	}

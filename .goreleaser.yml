@@ -30,6 +30,7 @@ builds:
         goarch: arm
     main: ./cmd/
     binary: licenser
+    ldflags: -s -w -X 'github.com/athopen/licenser/cmd/licenser.version={{ .Version }}' -X 'github.com/athopen/licenser/cmd/licenser.buildDate={{ .Date }}'
     flags:
       - -trimpath
 

@@ -1,18 +1,21 @@
 package licenser
 
 import (
-	"github.com/athopen/licenser/internal/cli"
+	"fmt"
 	"github.com/spf13/afero"
 	"github.com/symfony-cli/console"
+	"time"
 )
 
 var (
 	// version is overridden at linking time
 	version = "dev"
+	// overridden at linking time
+	buildDate string
 )
 
 var (
-	osFs = afero.NewOsFs()
+	fs = afero.NewOsFs()
 )
 
 var (
@@ -21,43 +24,46 @@ var (
 	noDevFlag = &console.BoolFlag{Name: "no-dev", Usage: "Exclude require-dev packages"}
 )
 
+var (
+	helpTemplate = `<info>
+        _____ _______ _______ __   _ _______ _______  ______
+ |        |   |       |______ | \  | |______ |______ |_____/
+ |_____ __|__ |_____  |______ |  \_| ______| |______ |    \_
+</>
+
+<info>{{.Name}}</>{{if .Version}} version <comment>{{.Version}}</>{{end}}{{if .Copyright}} {{.Copyright}}{{end}}
+
+{{.Usage}}
+
+<comment>Usage</>:
+  {{.HelpName}} {{if .VisibleFlags}}[global options]{{end}}{{if .Commands}} <command> [command options]{{end}} [arguments...]{{if .Description}}
+
+{{.Description}}{{end}}{{if .VisibleFlags}}
+
+<comment>Global options:</>
+  {{range $index, $option := .VisibleFlags}}{{if $index}}
+  {{end}}{{$option}}{{end}}{{end}}{{if .VisibleCommands}}
+
+<comment>Available commands:</>{{range .VisibleCategories}}{{if .Name}}
+ <comment>{{.Name}}</>{{"\t"}}{{end}}{{range .VisibleCommands}}
+  <info>{{join .Names ", "}}</>{{"\t"}}{{.Usage}}{{end}}{{end}}{{end}}
+`
+)
+
 func Application() *console.Application {
 	return &console.Application{
 		Name:      "licenser",
-		Copyright: "(c) 2024 Andreas Penz",
+		Copyright: fmt.Sprintf("(c) %d <info>Andreas Penz <andreas.penz.1989@gmail.com></>", time.Now().Year()),
 		Usage:     "Licenser is a tool designed to check and report on the licenses used by a package and its dependencies.",
-		Flags: []console.Flag{
-			fileFlag,
-			dirFlag,
-			noDevFlag,
+		Action: func(ctx *console.Context) error {
+			console.HelpPrinter(ctx.App.Writer, helpTemplate, ctx.App)
+			return nil
 		},
 		Commands: []*console.Command{
 			infoCommand(),
 			checkCommand(),
 		},
-		Version: version,
-	}
-}
-
-type projectOptionsFunc func(ctx *console.Context, opts *cli.ProjectOptions) error
-
-func withProjectOptions(fn projectOptionsFunc) func(ctx *console.Context) error {
-	return func(ctx *console.Context) error {
-		opts, err := cli.NewProjectOptions(
-			osFs,
-			cli.WithWorkingDir(ctx.String(dirFlag.Name)),
-			cli.WithConfigFile(ctx.String(fileFlag.Name)),
-			cli.WithNoDev(ctx.Bool(noDevFlag.Name)),
-		)
-
-		if err != nil {
-			return err
-		}
-
-		if err != nil {
-			return err
-		}
-
-		return fn(ctx, opts)
+		Version:   version,
+		BuildDate: buildDate,
 	}
 }

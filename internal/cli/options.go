@@ -8,8 +8,6 @@ import (
 )
 
 type ProjectOptions struct {
-	Fs afero.Fs
-
 	WorkingDir string
 	ConfigFile string
 	NoDev      bool
@@ -17,10 +15,8 @@ type ProjectOptions struct {
 
 type ProjectOptionsFn func(*ProjectOptions) error
 
-func NewProjectOptions(fs afero.Fs, fns ...ProjectOptionsFn) (*ProjectOptions, error) {
-	opts := &ProjectOptions{
-		Fs: fs,
-	}
+func NewProjectOptions(fns ...ProjectOptionsFn) (*ProjectOptions, error) {
+	opts := &ProjectOptions{}
 
 	for _, fn := range fns {
 		if err := fn(opts); err != nil {
@@ -31,7 +27,7 @@ func NewProjectOptions(fs afero.Fs, fns ...ProjectOptionsFn) (*ProjectOptions, e
 	return opts, nil
 }
 
-func WithWorkingDir(path string) ProjectOptionsFn {
+func WithWorkingDir(fs afero.Fs, path string) ProjectOptionsFn {
 	return func(o *ProjectOptions) error {
 		if path == "" {
 			return nil
@@ -42,7 +38,7 @@ func WithWorkingDir(path string) ProjectOptionsFn {
 			return err
 		}
 
-		if found, _ := filesystem.DirExists(o.Fs, path); !found {
+		if found, _ := filesystem.DirExists(fs, path); !found {
 			return fmt.Errorf("dir does not exist at \"%s\"", path)
 		}
 
@@ -54,12 +50,12 @@ func WithWorkingDir(path string) ProjectOptionsFn {
 
 var defaultFileName = "licenser.yml"
 
-func WithConfigFile(path string) ProjectOptionsFn {
+func WithConfigFile(fs afero.Fs, path string) ProjectOptionsFn {
 	return func(o *ProjectOptions) error {
 		if path == "" {
 			path := filepath.Join(o.WorkingDir, defaultFileName)
 
-			if found, _ := filesystem.Exists(o.Fs, path); !found {
+			if found, _ := filesystem.Exists(fs, path); !found {
 				return fmt.Errorf("config file does not exist at \"%s\"", path)
 			}
 
@@ -73,7 +69,7 @@ func WithConfigFile(path string) ProjectOptionsFn {
 			return err
 		}
 
-		if found, _ := filesystem.Exists(o.Fs, path); !found {
+		if found, _ := filesystem.Exists(fs, path); !found {
 			return fmt.Errorf("config file does not exist at \"%s\"", path)
 		}
 

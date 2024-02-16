@@ -12,14 +12,27 @@ import (
 
 func infoCommand() *console.Command {
 	return &console.Command{
-		Name:   "info",
-		Usage:  "N/A",
-		Action: withProjectOptions(infoAction),
+		Name:  "info",
+		Usage: "N/A",
+		Flags: []console.Flag{
+			dirFlag,
+			noDevFlag,
+		},
+		Action: infoAction,
 	}
 }
 
-func infoAction(_ *console.Context, opts *cli.ProjectOptions) error {
-	repo, err := repository.LoadRepository(opts.Fs, opts.WorkingDir)
+func infoAction(ctx *console.Context) error {
+	opts, err := cli.NewProjectOptions(
+		cli.WithWorkingDir(fs, ctx.String(dirFlag.Name)),
+		cli.WithNoDev(ctx.Bool(noDevFlag.Name)),
+	)
+
+	if err != nil {
+		return err
+	}
+
+	repo, err := repository.LoadRepository(fs, opts.WorkingDir)
 	if err != nil {
 		return err
 	}
