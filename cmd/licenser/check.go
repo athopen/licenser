@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/athopen/licenser/internal/license"
+
 	"github.com/athopen/licenser/internal/cli"
 	"github.com/athopen/licenser/internal/config"
 	"github.com/athopen/licenser/internal/repository"
-	"github.com/github/go-spdx/expression"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/terminal"
 )
@@ -54,18 +55,7 @@ func checkAction(ctx *console.Context) error {
 			continue
 		}
 
-		valid := false
-		for _, license := range pkg.Licenses {
-			license = strings.ReplaceAll(license, "or", "OR")
-			license = strings.ReplaceAll(license, "and", "AND")
-
-			satisfies, err := expression.Satisfies(license, project.Licenses)
-			if satisfies && err == nil {
-				valid = true
-			}
-		}
-
-		if !valid {
+		if !license.Satisfies(pkg.Licenses, project.Licenses) {
 			violations = append(violations, fmt.Sprintf("License \"%s\" of package %s is not allowed.", strings.Join(pkg.Licenses, ", "), pkg.Name))
 		}
 	}
