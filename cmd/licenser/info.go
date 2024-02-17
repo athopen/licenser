@@ -32,7 +32,7 @@ func infoAction(ctx *console.Context) error {
 		return err
 	}
 
-	repo, err := repository.LoadRepository(fs, opts.WorkingDir)
+	pkgs, err := repository.LoadPackages(fs, opts.WorkingDir, opts.NoDev, []string{})
 	if err != nil {
 		return err
 	}
@@ -46,7 +46,7 @@ func infoAction(ctx *console.Context) error {
 		terminal.Format("<header>License</>"),
 	})
 
-	for _, pkg := range repo.GetPackages(opts.NoDev) {
+	for _, pkg := range pkgs {
 		licenseStr := "none"
 		if len(pkg.Licenses) != 0 {
 			licenseStr = strings.Join(pkg.Licenses, ", ")
@@ -60,6 +60,8 @@ func infoAction(ctx *console.Context) error {
 	}
 
 	table.Render()
+
+	terminal.Printfln("<comment>%d packages found</>", len(pkgs))
 
 	return nil
 }

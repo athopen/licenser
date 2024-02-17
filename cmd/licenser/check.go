@@ -8,7 +8,6 @@ import (
 	"github.com/github/go-spdx/expression"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/terminal"
-	"path/filepath"
 	"strings"
 )
 
@@ -36,35 +35,18 @@ func checkAction(ctx *console.Context) error {
 		return err
 	}
 
-	repo, err := repository.LoadRepository(fs, opts.WorkingDir)
-	if err != nil {
-		return err
-	}
-
 	project, err := config.LoadProject(fs, opts.ConfigFile)
 	if err != nil {
 		return err
 	}
 
+	pkgs, err := repository.LoadPackages(fs, opts.WorkingDir, opts.NoDev, project.Packages)
+	if err != nil {
+		return err
+	}
+
 	var violations []string
-	for _, pkg := range repo.GetPackages(opts.NoDev) {
-		skip := false
-		for _, pattern := range project.Packages {
-			match, err := filepath.Match(pattern, pkg.Name)
-			if err != nil {
-				return err
-			}
-
-			if match {
-				skip = true
-				continue
-			}
-		}
-
-		if skip {
-			continue
-		}
-
+	for _, pkg := range pkgs {
 		if len(pkg.Licenses) == 0 {
 			violations = append(violations, fmt.Sprintf("No license found for package %s.", pkg.Name))
 
