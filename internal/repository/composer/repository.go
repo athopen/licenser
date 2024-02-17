@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
-	"slices"
 
 	"github.com/athopen/licenser/internal/filesystem"
 	"github.com/athopen/licenser/internal/repository"
@@ -24,49 +23,47 @@ func Factory(fs afero.Fs, wd string) repository.Repository {
 	}
 }
 
-var (
-	installedJSONPath = filepath.Join("vendor", "composer", "installed.json")
-)
+type installedJSON struct {
+	Packages []struct {
+		Name     string   `json:"name"`
+		Version  string   `json:"version_normalized"`
+		Licenses []string `json:"license"`
+	} `json:"packages"`
+	DevPackageNames []string `json:"dev-package-names"`
+}
 
-func (r Repository) GetPackages(noDev bool, patterns []string) (repository.Packages, error) {
-	contents, err := filesystem.ReadFile(r.fs, filepath.Join(r.wd, installedJSONPath))
+func (r Repository) GetPackages(patterns []string) (repository.Packages, error) {
+	decoded, err := readInstalledJSON(r.fs, filepath.Join(r.wd, "vendor", "composer", "installed.json"))
 	if err != nil {
 		return nil, err
 	}
 
-	var repo struct {
-		Packages []struct {
-			Name     string   `json:"name"`
-			Version  string   `json:"version_normalized"`
-			Licenses []string `json:"license"`
-		} `json:"packages"`
-		DevPackageNames []string `json:"dev-package-names"`
+	var pkgs repository.Packages
+	for _, pkg := range decoded.Packages {
+		if wildecard.Match(pkg.Name, patterns) {
+			continue
+		}
+
+		pkgs = append(pkgs, repository.Package{
+			Name:     pkg.Name,
+			Version:  pkg.Version,
+			Licenses: pkg.Licenses,
+		})
 	}
 
-	if err = json.Unmarshal(contents, &repo); err != nil {
+	return pkgs, nil
+}
+
+func readInstalledJSON(fs afero.Fs, path string) (*installedJSON, error) {
+	contents, err := filesystem.ReadFile(fs, path)
+	if err != nil {
+		return nil, err
+	}
+
+	var decoded installedJSON
+	if err = json.Unmarshal(contents, &decoded); err != nil {
 		return nil, fmt.Errorf("installed.json does not contain valid JSON")
 	}
 
-	var packages repository.Packages
-	for _, p := range repo.Packages {
-		isDev := slices.Contains(repo.DevPackageNames, p.Name)
-		if noDev && isDev {
-			continue
-		}
-
-		if wildecard.Match(p.Name, patterns) {
-			continue
-		}
-
-		pkg := repository.Package{
-			Dev:      isDev,
-			Name:     p.Name,
-			Version:  p.Version,
-			Licenses: p.Licenses,
-		}
-
-		packages = append(packages, pkg)
-	}
-
-	return packages, nil
+	return &decoded, nil
 }

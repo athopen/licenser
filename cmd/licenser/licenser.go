@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/athopen/licenser/internal/repository/npm"
+
 	"github.com/athopen/licenser/internal/repository"
 	"github.com/athopen/licenser/internal/repository/composer"
 
@@ -23,18 +25,18 @@ var (
 )
 
 var (
-	managerArg = &console.Arg{Name: "manager", Description: "The package manager", Default: "composer"}
+	managerArg = &console.Arg{Name: "manager", Description: "The package manager (composer or npm)"}
 )
 
 var (
-	fileFlag  = &console.StringFlag{Name: "file", Usage: "Config file"}
-	dirFlag   = &console.StringFlag{Name: "dir", Usage: "Working directory"}
-	noDevFlag = &console.BoolFlag{Name: "no-dev", Usage: "Excluded require-dev packages"}
+	fileFlag = &console.StringFlag{Name: "file", Usage: "Config file"}
+	dirFlag  = &console.StringFlag{Name: "dir", Usage: "Working directory"}
 )
 
 var (
 	factories = map[string]repository.Factory{
 		"composer": composer.Factory,
+		"npm":      npm.Factory,
 	}
 )
 
