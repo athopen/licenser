@@ -41,7 +41,7 @@ func checkAction(ctx *console.Context) error {
 		return err
 	}
 
-	pkgs, err := repository.LoadPackages(fs, opts.WorkingDir, opts.NoDev, project.Packages)
+	pkgs, err := repository.LoadPackages(fs, opts.WorkingDir, opts.NoDev, project.Excluded)
 	if err != nil {
 		return err
 	}

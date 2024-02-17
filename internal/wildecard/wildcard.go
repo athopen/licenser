@@ -2,23 +2,17 @@ package wildecard
 
 import "path/filepath"
 
-type Matcher []string
-
-func NewMatcher(patterns []string) Matcher {
-	return patterns
-}
-
-func (m Matcher) Match(s string) (bool, error) {
-	for _, r := range m {
-		match, err := filepath.Match(r, s)
+func Match(s string, patterns []string) bool {
+	for _, p := range patterns {
+		match, err := filepath.Match(p, s)
 		if err != nil {
-			return false, err
+			return false
 		}
 
 		if match {
-			return true, nil
+			return true
 		}
 	}
 
-	return false, nil
+	return false
 }

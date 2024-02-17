@@ -10,7 +10,7 @@ import (
 
 type Project struct {
 	Licenses []string `yaml:"licenses"`
-	Packages []string `yaml:"packages"`
+	Excluded []string `yaml:"excluded"`
 }
 
 func LoadProject(fs afero.Fs, path string) (*Project, error) {

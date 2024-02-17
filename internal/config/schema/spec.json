@@ -10,7 +10,7 @@
       },
       "additionalProperties": false
     },
-    "packages": {
+    "excluded": {
       "type": "array",
       "items": {
         "type": "string"

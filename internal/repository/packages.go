@@ -43,25 +43,19 @@ func LoadPackages(fs afero.Fs, wd string, noDev bool, patterns []string) (Packag
 		return nil, fmt.Errorf("installed.json does not contain valid JSON")
 	}
 
-	matcher := wildecard.NewMatcher(patterns)
-
 	var packages Packages
 	for _, p := range repo.Packages {
-		if noDev && slices.Contains(repo.DevPackageNames, p.Name) {
+		isDev := slices.Contains(repo.DevPackageNames, p.Name)
+		if noDev && isDev {
 			continue
 		}
 
-		matches, err := matcher.Match(p.Name)
-		if err != nil {
-			return nil, err
-		}
-
-		if matches {
+		if wildecard.Match(p.Name, patterns) {
 			continue
 		}
 
 		pkg := Package{
-			Dev:      slices.Contains(repo.DevPackageNames, p.Name),
+			Dev:      isDev,
 			Name:     p.Name,
 			Version:  p.Version,
 			Licenses: p.Licenses,

@@ -22,7 +22,7 @@ var (
 var (
 	fileFlag  = &console.StringFlag{Name: "file", Usage: "Config file"}
 	dirFlag   = &console.StringFlag{Name: "dir", Usage: "Working directory"}
-	noDevFlag = &console.BoolFlag{Name: "no-dev", Usage: "Exclude require-dev packages"}
+	noDevFlag = &console.BoolFlag{Name: "no-dev", Usage: "Excluded require-dev packages"}
 )
 
 var (
