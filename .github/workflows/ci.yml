@@ -28,6 +28,9 @@ jobs:
           skip-build-cache: true
           skip-pkg-cache: true
 
+      - name: test
+        run: go test -v ./...
+
       - name: build release
         uses: goreleaser/goreleaser-action@v5
         if: startsWith(github.ref, 'refs/tags/v')

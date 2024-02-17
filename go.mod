@@ -11,10 +11,12 @@ require (
 	github.com/symfony-cli/terminal v0.0.0-20211113151828-3b1d22f17f52
 	github.com/xeipuuv/gojsonschema v1.2.0
 	gopkg.in/yaml.v2 v2.4.0
+	gotest.tools/v3 v3.5.1
 )
 
 require (
 	github.com/ferhatelmas/levenshtein v0.0.0-20160518143259-a12aecc52d76 // indirect
+	github.com/google/go-cmp v0.5.9 // indirect
 	github.com/mattn/go-colorable v0.1.11 // indirect
 	github.com/mattn/go-isatty v0.0.14 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
