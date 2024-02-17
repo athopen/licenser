@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/athopen/licenser/internal/repository"
+	"github.com/athopen/licenser/internal/repository/composer"
+
 	"github.com/spf13/afero"
 	"github.com/symfony-cli/console"
 )
@@ -20,10 +23,29 @@ var (
 )
 
 var (
+	managerArg = &console.Arg{Name: "manager", Description: "The package manager", Default: "composer"}
+)
+
+var (
 	fileFlag  = &console.StringFlag{Name: "file", Usage: "Config file"}
 	dirFlag   = &console.StringFlag{Name: "dir", Usage: "Working directory"}
 	noDevFlag = &console.BoolFlag{Name: "no-dev", Usage: "Excluded require-dev packages"}
 )
+
+var (
+	factories = map[string]repository.Factory{
+		"composer": composer.Factory,
+	}
+)
+
+func resolveFactory(manager string) (repository.Factory, error) {
+	factory, exists := factories[manager]
+	if !exists {
+		return nil, fmt.Errorf("package manager \"%s\" is not supported", manager)
+	}
+
+	return factory, nil
+}
 
 var (
 	helpTemplate = `<info>

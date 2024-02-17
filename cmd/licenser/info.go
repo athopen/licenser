@@ -15,25 +15,34 @@ func infoCommand() *console.Command {
 	return &console.Command{
 		Name:  "info",
 		Usage: "List licenses of dependencies",
+		Args: []*console.Arg{
+			managerArg,
+		},
 		Flags: []console.Flag{
 			dirFlag,
 			noDevFlag,
 		},
-		Action: infoAction,
+		Action: func(ctx *console.Context) error {
+			opts, err := cli.NewProjectOptions(
+				cli.WithWorkingDir(fs, ctx.String(dirFlag.Name)),
+			)
+
+			if err != nil {
+				return err
+			}
+
+			factory, err := resolveFactory(ctx.Args().Get(managerArg.Name))
+			if err != nil {
+				return err
+			}
+
+			return infoAction(ctx, factory(fs, opts.WorkingDir))
+		},
 	}
 }
 
-func infoAction(ctx *console.Context) error {
-	opts, err := cli.NewProjectOptions(
-		cli.WithWorkingDir(fs, ctx.String(dirFlag.Name)),
-		cli.WithNoDev(ctx.Bool(noDevFlag.Name)),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	pkgs, err := repository.LoadPackages(fs, opts.WorkingDir, opts.NoDev, []string{})
+func infoAction(ctx *console.Context, repo repository.Repository) error {
+	pkgs, err := repo.GetPackages(ctx.Bool(noDevFlag.Name), []string{})
 	if err != nil {
 		return err
 	}

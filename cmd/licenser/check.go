@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/athopen/licenser/internal/repository"
+
 	"github.com/athopen/licenser/internal/license"
 
 	"github.com/athopen/licenser/internal/cli"
 	"github.com/athopen/licenser/internal/config"
-	"github.com/athopen/licenser/internal/repository"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/terminal"
 )
@@ -17,32 +18,41 @@ func checkCommand() *console.Command {
 	return &console.Command{
 		Name:  "check",
 		Usage: "Check licenses of dependencies",
+		Args: []*console.Arg{
+			managerArg,
+		},
 		Flags: []console.Flag{
 			dirFlag,
 			fileFlag,
 			noDevFlag,
 		},
-		Action: checkAction,
+		Action: func(ctx *console.Context) error {
+			opts, err := cli.NewProjectOptions(
+				cli.WithWorkingDir(fs, ctx.String(dirFlag.Name)),
+				cli.WithConfigFile(fs, ctx.String(fileFlag.Name)),
+			)
+
+			if err != nil {
+				return err
+			}
+
+			factory, err := resolveFactory(ctx.Args().Get(managerArg.Name))
+			if err != nil {
+				return err
+			}
+
+			project, err := config.LoadProject(fs, opts.ConfigFile)
+			if err != nil {
+				return err
+			}
+
+			return checkAction(ctx, factory(fs, opts.WorkingDir), project)
+		},
 	}
 }
 
-func checkAction(ctx *console.Context) error {
-	opts, err := cli.NewProjectOptions(
-		cli.WithWorkingDir(fs, ctx.String(dirFlag.Name)),
-		cli.WithConfigFile(fs, ctx.String(fileFlag.Name)),
-		cli.WithNoDev(ctx.Bool(noDevFlag.Name)),
-	)
-
-	if err != nil {
-		return err
-	}
-
-	project, err := config.LoadProject(fs, opts.ConfigFile)
-	if err != nil {
-		return err
-	}
-
-	pkgs, err := repository.LoadPackages(fs, opts.WorkingDir, opts.NoDev, project.Excluded)
+func checkAction(ctx *console.Context, repo repository.Repository, project *config.Project) error {
+	pkgs, err := repo.GetPackages(ctx.Bool(noDevFlag.Name), project.Excluded)
 	if err != nil {
 		return err
 	}

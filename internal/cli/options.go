@@ -11,7 +11,6 @@ import (
 type ProjectOptions struct {
 	WorkingDir string
 	ConfigFile string
-	NoDev      bool
 }
 
 type ProjectOptionsFn func(*ProjectOptions) error
@@ -75,14 +74,6 @@ func WithConfigFile(fs afero.Fs, path string) ProjectOptionsFn {
 		}
 
 		o.ConfigFile = path
-
-		return nil
-	}
-}
-
-func WithNoDev(noDev bool) ProjectOptionsFn {
-	return func(o *ProjectOptions) error {
-		o.NoDev = noDev
 
 		return nil
 	}

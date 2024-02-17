@@ -1,4 +1,4 @@
-package repository
+package composer
 
 import (
 	"encoding/json"
@@ -7,25 +7,29 @@ import (
 	"slices"
 
 	"github.com/athopen/licenser/internal/filesystem"
+	"github.com/athopen/licenser/internal/repository"
 	"github.com/athopen/licenser/internal/wildecard"
 	"github.com/spf13/afero"
 )
 
-type Packages []Package
+type Repository struct {
+	fs afero.Fs
+	wd string
+}
 
-type Package struct {
-	Dev      bool
-	Name     string   `json:"name"`
-	Version  string   `json:"version_normalized"`
-	Licenses []string `json:"license"`
+func Factory(fs afero.Fs, wd string) repository.Repository {
+	return &Repository{
+		fs: fs,
+		wd: wd,
+	}
 }
 
 var (
 	installedJSONPath = filepath.Join("vendor", "composer", "installed.json")
 )
 
-func LoadPackages(fs afero.Fs, wd string, noDev bool, patterns []string) (Packages, error) {
-	contents, err := filesystem.ReadFile(fs, filepath.Join(wd, installedJSONPath))
+func (r Repository) GetPackages(noDev bool, patterns []string) (repository.Packages, error) {
+	contents, err := filesystem.ReadFile(r.fs, filepath.Join(r.wd, installedJSONPath))
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +47,7 @@ func LoadPackages(fs afero.Fs, wd string, noDev bool, patterns []string) (Packag
 		return nil, fmt.Errorf("installed.json does not contain valid JSON")
 	}
 
-	var packages Packages
+	var packages repository.Packages
 	for _, p := range repo.Packages {
 		isDev := slices.Contains(repo.DevPackageNames, p.Name)
 		if noDev && isDev {
@@ -54,7 +58,7 @@ func LoadPackages(fs afero.Fs, wd string, noDev bool, patterns []string) (Packag
 			continue
 		}
 
-		pkg := Package{
+		pkg := repository.Package{
 			Dev:      isDev,
 			Name:     p.Name,
 			Version:  p.Version,
