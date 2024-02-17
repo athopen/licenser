@@ -1,9 +1,10 @@
 package licenser
 
 import (
+	"strings"
+
 	"github.com/athopen/licenser/internal/cli"
 	"github.com/athopen/licenser/internal/repository"
-	"strings"
 
 	"github.com/olekukonko/tablewriter"
 	"github.com/symfony-cli/console"
@@ -13,7 +14,7 @@ import (
 func infoCommand() *console.Command {
 	return &console.Command{
 		Name:  "info",
-		Usage: "N/A",
+		Usage: "List licenses of dependencies",
 		Flags: []console.Flag{
 			dirFlag,
 			noDevFlag,

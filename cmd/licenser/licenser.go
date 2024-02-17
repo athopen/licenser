@@ -2,9 +2,10 @@ package licenser
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/spf13/afero"
 	"github.com/symfony-cli/console"
-	"time"
 )
 
 var (

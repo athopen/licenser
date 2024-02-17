@@ -2,19 +2,20 @@ package licenser
 
 import (
 	"fmt"
+	"strings"
+
 	"github.com/athopen/licenser/internal/cli"
 	"github.com/athopen/licenser/internal/config"
 	"github.com/athopen/licenser/internal/repository"
 	"github.com/github/go-spdx/expression"
 	"github.com/symfony-cli/console"
 	"github.com/symfony-cli/terminal"
-	"strings"
 )
 
 func checkCommand() *console.Command {
 	return &console.Command{
 		Name:  "check",
-		Usage: "N/A",
+		Usage: "Check licenses of dependencies",
 		Flags: []console.Flag{
 			dirFlag,
 			fileFlag,

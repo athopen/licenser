@@ -3,11 +3,12 @@ package repository
 import (
 	"encoding/json"
 	"fmt"
+	"path/filepath"
+	"slices"
+
 	"github.com/athopen/licenser/internal/filesystem"
 	"github.com/athopen/licenser/internal/wildecard"
 	"github.com/spf13/afero"
-	"path/filepath"
-	"slices"
 )
 
 type Packages []Package
@@ -20,11 +21,11 @@ type Package struct {
 }
 
 var (
-	installedJsonPath = filepath.Join("vendor", "composer", "installed.json")
+	installedJSONPath = filepath.Join("vendor", "composer", "installed.json")
 )
 
 func LoadPackages(fs afero.Fs, wd string, noDev bool, patterns []string) (Packages, error) {
-	contents, err := filesystem.ReadFile(fs, filepath.Join(wd, installedJsonPath))
+	contents, err := filesystem.ReadFile(fs, filepath.Join(wd, installedJSONPath))
 	if err != nil {
 		return nil, err
 	}

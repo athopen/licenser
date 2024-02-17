@@ -1,0 +1,35 @@
+run:
+  concurrency: 2
+  timeout: 10m
+
+linters:
+  enable-all: false
+  disable-all: true
+  enable:
+    - errcheck
+    - errorlint
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - gomodguard
+    - revive
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - nolintlint
+    - staticcheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+
+linters-settings:
+  errcheck:
+    exclude-functions:
+      - github.com/symfony-cli/terminal.Printfln
+  lll:
+    line-length: 200

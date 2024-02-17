@@ -3,6 +3,7 @@ package schema
 import (
 	_ "embed"
 	"fmt"
+
 	"github.com/xeipuuv/gojsonschema"
 )
 

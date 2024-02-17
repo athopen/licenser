@@ -2,9 +2,10 @@ package cli
 
 import (
 	"fmt"
+	"path/filepath"
+
 	"github.com/athopen/licenser/internal/filesystem"
 	"github.com/spf13/afero"
-	"path/filepath"
 )
 
 type ProjectOptions struct {
