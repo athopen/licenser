@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"slices"
 
 	"github.com/athopen/licenser/internal/filesystem"
 	"github.com/athopen/licenser/internal/repository"
@@ -23,7 +24,7 @@ func Factory(fs afero.Fs, wd string) repository.Repository {
 	}
 }
 
-type installedJSON struct {
+type InstalledJSONData struct {
 	Packages []struct {
 		Name     string   `json:"name"`
 		Version  string   `json:"version_normalized"`
@@ -32,14 +33,18 @@ type installedJSON struct {
 	DevPackageNames []string `json:"dev-package-names"`
 }
 
-func (r Repository) GetPackages(patterns []string) (repository.Packages, error) {
-	decoded, err := readInstalledJSON(r.fs, filepath.Join(r.wd, "vendor", "composer", "installed.json"))
+func (r Repository) GetPackages(noDev bool, patterns []string) (repository.Packages, error) {
+	installedJSON, err := readInstalledJSON(r.fs, filepath.Join(r.wd, "vendor", "composer", "installed.json"))
 	if err != nil {
 		return nil, err
 	}
 
 	var pkgs repository.Packages
-	for _, pkg := range decoded.Packages {
+	for _, pkg := range installedJSON.Packages {
+		if noDev && slices.Contains(installedJSON.DevPackageNames, pkg.Name) {
+			continue
+		}
+
 		if wildecard.Match(pkg.Name, patterns) {
 			continue
 		}
@@ -54,13 +59,13 @@ func (r Repository) GetPackages(patterns []string) (repository.Packages, error) 
 	return pkgs, nil
 }
 
-func readInstalledJSON(fs afero.Fs, path string) (*installedJSON, error) {
+func readInstalledJSON(fs afero.Fs, path string) (*InstalledJSONData, error) {
 	contents, err := filesystem.ReadFile(fs, path)
 	if err != nil {
 		return nil, err
 	}
 
-	var decoded installedJSON
+	var decoded InstalledJSONData
 	if err = json.Unmarshal(contents, &decoded); err != nil {
 		return nil, fmt.Errorf("installed.json does not contain valid JSON")
 	}

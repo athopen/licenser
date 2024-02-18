@@ -24,6 +24,7 @@ func checkCommand() *console.Command {
 		Flags: []console.Flag{
 			dirFlag,
 			fileFlag,
+			noDevFlag,
 		},
 		Action: func(ctx *console.Context) error {
 			opts, err := cli.NewProjectOptions(
@@ -45,13 +46,13 @@ func checkCommand() *console.Command {
 				return err
 			}
 
-			return checkAction(factory(fs, opts.WorkingDir), project)
+			return checkAction(ctx, factory(fs, opts.WorkingDir), project)
 		},
 	}
 }
 
-func checkAction(repo repository.Repository, project *config.Project) error {
-	pkgs, err := repo.GetPackages(project.Excluded)
+func checkAction(ctx *console.Context, repo repository.Repository, project *config.Project) error {
+	pkgs, err := repo.GetPackages(ctx.Bool(noDevFlag.Name), project.Excluded)
 	if err != nil {
 		return err
 	}

@@ -11,7 +11,7 @@ type Package struct {
 }
 
 type Repository interface {
-	GetPackages(patterns []string) (Packages, error)
+	GetPackages(noDev bool, patterns []string) (Packages, error)
 }
 
 type Factory func(fs afero.Fs, wd string) Repository

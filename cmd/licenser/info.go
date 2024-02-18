@@ -20,6 +20,7 @@ func infoCommand() *console.Command {
 		},
 		Flags: []console.Flag{
 			dirFlag,
+			noDevFlag,
 		},
 		Action: func(ctx *console.Context) error {
 			opts, err := cli.NewProjectOptions(
@@ -35,13 +36,13 @@ func infoCommand() *console.Command {
 				return err
 			}
 
-			return infoAction(factory(fs, opts.WorkingDir))
+			return infoAction(ctx, factory(fs, opts.WorkingDir))
 		},
 	}
 }
 
-func infoAction(repo repository.Repository) error {
-	pkgs, err := repo.GetPackages([]string{})
+func infoAction(ctx *console.Context, repo repository.Repository) error {
+	pkgs, err := repo.GetPackages(ctx.Bool(noDevFlag.Name), []string{})
 	if err != nil {
 		return err
 	}

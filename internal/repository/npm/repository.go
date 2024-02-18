@@ -23,7 +23,13 @@ func Factory(fs afero.Fs, wd string) repository.Repository {
 	}
 }
 
-type packageJSON struct {
+type PackageLockJSONData struct {
+	Packages map[string]struct {
+		Dev bool `json:"dev"`
+	} `json:"packages"`
+}
+
+type PackageJSONData struct {
 	Name     string `json:"name"`
 	Version  string `json:"version"`
 	License  string `json:"license"`
@@ -32,7 +38,12 @@ type packageJSON struct {
 	} `json:"licenses"`
 }
 
-func (r Repository) GetPackages(patterns []string) (repository.Packages, error) {
+func (r Repository) GetPackages(noDev bool, patterns []string) (repository.Packages, error) {
+	packageLockJSON, err := readPackageLockJSON(r.fs, filepath.Join(r.wd, "node_modules", ".package-lock.json"))
+	if err != nil {
+		return nil, err
+	}
+
 	paths, err := filesystem.Glob(r.fs, filepath.Join(r.wd, "node_modules", "*", "package.json"))
 	if err != nil {
 		return nil, err
@@ -40,27 +51,41 @@ func (r Repository) GetPackages(patterns []string) (repository.Packages, error) 
 
 	var pkgs repository.Packages
 	for _, path := range paths {
-		decoded, err := readPackageJSON(r.fs, path)
+		rel, err := filepath.Rel(r.wd, path)
 		if err != nil {
 			return nil, err
 		}
 
-		if wildecard.Match(decoded.Name, patterns) {
+		pkgLockData, found := packageLockJSON.Packages[filepath.Dir(rel)]
+		if !found {
+			return nil, fmt.Errorf("\"%s\" unable to determine if package is installed as dev", path)
+		}
+
+		if noDev && pkgLockData.Dev {
+			continue
+		}
+
+		packageJSONData, err := readPackageJSON(r.fs, path)
+		if err != nil {
+			return nil, err
+		}
+
+		if wildecard.Match(packageJSONData.Name, patterns) {
 			continue
 		}
 
 		var licenses []string
-		if decoded.License != "" {
-			licenses = append(licenses, decoded.License)
+		if packageJSONData.License != "" {
+			licenses = append(licenses, packageJSONData.License)
 		} else {
-			for _, license := range decoded.Licenses {
+			for _, license := range packageJSONData.Licenses {
 				licenses = append(licenses, license.Type)
 			}
 		}
 
 		pkgs = append(pkgs, repository.Package{
-			Name:     decoded.Name,
-			Version:  decoded.Version,
+			Name:     packageJSONData.Name,
+			Version:  packageJSONData.Version,
 			Licenses: licenses,
 		})
 	}
@@ -68,13 +93,27 @@ func (r Repository) GetPackages(patterns []string) (repository.Packages, error) 
 	return pkgs, nil
 }
 
-func readPackageJSON(fs afero.Fs, path string) (*packageJSON, error) {
+func readPackageLockJSON(fs afero.Fs, path string) (*PackageLockJSONData, error) {
 	contents, err := filesystem.ReadFile(fs, path)
 	if err != nil {
 		return nil, err
 	}
 
-	var decoded packageJSON
+	var decoded PackageLockJSONData
+	if err = json.Unmarshal(contents, &decoded); err != nil {
+		return nil, fmt.Errorf("\"%s\" does not contain valid JSON", path)
+	}
+
+	return &decoded, nil
+}
+
+func readPackageJSON(fs afero.Fs, path string) (*PackageJSONData, error) {
+	contents, err := filesystem.ReadFile(fs, path)
+	if err != nil {
+		return nil, err
+	}
+
+	var decoded PackageJSONData
 	if err = json.Unmarshal(contents, &decoded); err != nil {
 		return nil, fmt.Errorf("\"%s\" does not contain valid JSON", path)
 	}
